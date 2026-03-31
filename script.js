@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    window.onerror = function(msg, source, lineno, colno, error) {
+        showToast("Error: " + msg + " (L" + lineno + ")");
+    };
+
     // --- State Management ---
     const STORAGE_KEY = 'acctVaultData';
     const THEME_KEY = 'acctVaultTheme';
@@ -82,14 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
         clickSound: document.getElementById('click-sound')
     };
 
-    // --- Initialization ---
-    init();
-
     // Mobile Overlay Setup
     const mobileOverlay = document.createElement('div');
     mobileOverlay.className = 'mobile-overlay';
     document.body.appendChild(mobileOverlay);
     dom.mobileOverlay = mobileOverlay;
+
+    // --- Initialization ---
+    init();
 
     function init() {
         loadData();
@@ -791,7 +795,8 @@ document.addEventListener('DOMContentLoaded', () => {
             closeMobileSidebar();
             openModal(dom.backupModal);
         });
-        dom.syncSettingsBtn.addEventListener('click', () => {
+        
+        window.openSyncSettings = () => {
             closeMobileSidebar(); // Important: clear modal z-index overlap
             dom.githubTokenInput.value = githubToken;
             dom.githubGistIdInput.value = githubGistId;
@@ -805,7 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 dom.saveSyncBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 保存并初始化同步';
             }
             openModal(dom.syncModal);
-        });
+        };
+        dom.syncSettingsBtn.addEventListener('click', window.openSyncSettings);
 
         // Sync Modal Actions
         dom.saveSyncBtn.addEventListener('click', () => {
