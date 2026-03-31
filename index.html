@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AcctVault - 优雅的账号卡片管理器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar for Categories -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-vault"></i> AcctVault</h2>
+                <p>本地安全存储中心</p>
+            </div>
+            
+            <div class="category-header">
+                <h3>分类夹</h3>
+                <button id="add-category-btn" class="icon-btn" title="新建分类">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            
+            <ul id="category-list" class="category-list">
+                <!-- Categories will be injected here by JS -->
+            </ul>
+            
+
+            
+            <div class="sidebar-footer">
+                <div class="footer-actions">
+                    <button id="sync-settings-btn" class="text-btn">
+                        <i class="fa-solid fa-cloud"></i> 云端同步设置
+                    </button>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                        <div id="sync-status" class="sync-status offline" title="未配置同步">
+                            <span class="status-dot"></span> <span class="status-text">无同步</span>
+                        </div>
+                        <div id="github-latency" title="GitHub 实时测速" style="font-size:0.75rem; color:var(--text-secondary); margin-top:6px; display:flex; align-items:center; gap:4px;">
+                            <i class="fa-solid fa-wifi"></i> <span>-- ms</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <button id="export-import-btn" class="text-btn">
+                        <i class="fa-solid fa-file-export"></i> 备份与恢复
+                    </button>
+                    <div class="theme-toggle">
+                        <span>外观</span>
+                        <label class="switch">
+                            <input type="checkbox" id="theme-switch" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button id="mobile-menu-btn" class="icon-btn mobile-only">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 id="current-category-title">请选择或新建分类</h1>
+                    <span id="card-count" class="badge">0 张卡片</span>
+                </div>
+                <div class="header-right">
+                    <button id="add-data-btn" class="primary-btn">
+                        <i class="fa-solid fa-plus-circle"></i> <span class="desktop-text">录入数据</span>
+                    </button>
+                    <button id="delete-category-btn" class="danger-btn icon-only-btn" title="删除当前分类">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button id="empty-trash-btn" class="danger-btn hidden" title="彻底清空回收站">
+                        <i class="fa-solid fa-dumpster-fire"></i> <span class="desktop-text">清空</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="cards-container">
+                <div id="empty-state" class="empty-state hidden">
+                    <div class="empty-icon"><i class="fa-regular fa-folder-open"></i></div>
+                    <h3>这里空空如也</h3>
+                    <p>点击上方“录入数据”按钮，粘贴您的账号数据。</p>
+                </div>
+
+                <!-- 叠放卡片区 -->
+                <div id="card-stack" class="card-stack">
+                    <!-- Cards will be injected here -->
+                </div>
+
+                <!-- 卡片控制区 -->
+                <div class="card-controls">
+                    <button id="prev-card-btn" class="control-btn" title="上一张">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div class="pagination-indicator">
+                        <span id="current-card-index">0</span> / <span id="total-card-index">0</span>
+                    </div>
+                    <button id="next-card-btn" class="control-btn" title="下一张">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Add Category Modal -->
+    <div id="category-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>新建分类</h3>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-category-name">分类名称</label>
+                    <input type="text" id="new-category-name" placeholder="例如：游戏账号、邮箱合集..." autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn cancel-btn">取消</button>
+                <button id="save-category-btn" class="primary-btn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Data Modal -->
+    <div id="data-modal" class="modal-overlay hidden">
+        <div class="modal large-modal">
+            <div class="modal-header">
+                <h3>录入数据 <span class="subtitle">当前分类: <b id="target-category-name"></b></span></h3>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="data-input">粘贴数据 (支持多行批量导入)</label>
+                    <div class="format-hint">
+                        <i class="fa-solid fa-circle-info"></i> 格式要求：邮箱 | 密码 | 辅助邮箱 | Token | 国家
+                    </div>
+                    <textarea id="data-input" rows="8" placeholder="示例：&#10;Malkowskidzinski@gmail.com|lhpamwxz8|faeddyphinn1@outlook.com|vWBVLX4UN33MRRM53B635MASU7KSOWOAS|United States&#10;user2@gmail.com|pass|backup@mail.com|token|China"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="parse-status" id="parse-status"></span>
+                <button class="secondary-btn cancel-btn">取消</button>
+                <button id="save-data-btn" class="primary-btn">解析并保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export/Import Modal -->
+    <div id="backup-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>数据备份与本地恢复</h3>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="warning-text"><i class="fa-solid fa-triangle-exclamation"></i> 注意：如果您配置了云端同步，不建议再使用本地恢复覆盖数据，这可能导致版本冲突。</p>
+                <div class="backup-actions">
+                    <button id="export-data-btn" class="primary-btn full-width">
+                        <i class="fa-solid fa-download"></i> 导出所有数据 (JSON)
+                    </button>
+                    <div class="divider"><span>或</span></div>
+                    <label class="secondary-btn full-width file-upload-label">
+                        <i class="fa-solid fa-upload"></i> 从文件恢复数据
+                        <input type="file" id="import-file-input" accept=".json" class="hidden-file-input">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cloud Sync Modal -->
+    <div id="sync-modal" class="modal-overlay hidden">
+        <div class="modal large-modal scrollable-modal">
+            <div class="modal-header">
+                <h3>GitHub 云端同步 <span class="subtitle">实现多端数据互通</span></h3>
+                <button class="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tutorial-box">
+                    <h4><i class="fa-solid fa-book-open"></i> 如何获取 GitHub Token？</h4>
+                    <ol>
+                        <li>登录您的 GitHub 账号，访问 <code>Settings > Developer settings > Personal access tokens > Tokens (classic)</code> <a href="https://github.com/settings/tokens/new" target="_blank">点击此处直达</a>。</li>
+                        <li>点击右上角 <b>Generate new token (classic)</b>。</li>
+                        <li>设置 Note 为 <code>AcctVault Sync</code>，Expiration 选择 <b>No expiration</b> (永不过期)。</li>
+                        <li>在下方权限列表中，<b>仅勾选 <code>gist</code></b> (Create gists) 这一项。</li>
+                        <li>点击底部生成按钮，复制得到的 <code>ghp_xxx...</code> 长串文本填入下方。</li>
+                    </ol>
+                </div>
+                
+                <div class="form-group" style="margin-top:20px;">
+                    <label for="github-token">GitHub Personal Access Token</label>
+                    <input type="password" id="github-token" placeholder="输入 ghp_... 开头的 Token" autocomplete="off">
+                </div>
+                
+                <div class="form-group" style="margin-top:16px;">
+                    <label for="github-gist-id">Gist ID <span class="optional-text">(如果已有云端数据，请填写 ID；如果是新电脑第一次生成请留空)</span></label>
+                    <input type="text" id="github-gist-id" placeholder="例如：1a2b3c4d5e..." autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="sync-error" id="sync-error-msg"></span>
+                <button id="disconnect-sync-btn" class="danger-btn hidden">断开同步连接</button>
+                <button class="secondary-btn cancel-btn">稍后再说</button>
+                <button id="save-sync-btn" class="primary-btn"><i class="fa-solid fa-cloud-arrow-up"></i> 保存并初始化同步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">操作成功</div>
+
+    <!-- Audio wrapper for subtle interactions -->
+    <audio id="click-sound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
