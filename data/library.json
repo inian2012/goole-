@@ -1,0 +1,32 @@
+[
+  {
+    "id": "seed-text-001",
+    "type": "text",
+    "title": "数据格式2登录说明",
+    "category": "发货",
+    "tags": ["教程", "登录", "首登"],
+    "content": "比如打开教程 https://www.kdocs.cn/l/cuQj57gAJweO，选择数据格式2，即可轻松登录，质保首登，及时按照教程指引修改验证身份信息，尤其是辅助邮箱次日更改成自己的。",
+    "link": "https://www.kdocs.cn/l/cuQj57gAJweO",
+    "notes": "适合发货时一键复制给客户，后续可再拆成更细的版本。"
+  },
+  {
+    "id": "seed-cmd-001",
+    "type": "command",
+    "title": "SEAM 预训练命令",
+    "category": "训练",
+    "tags": ["深度学习", "预训练", "SEAM"],
+    "shell": "bash",
+    "content": "python code/train.py --train_path /home/user/ldr_code/data/seam_fda_output --val_path /home/user/ldr_code/data/f3_test --save output/seam_pretrain_recon --loss_type loss_new --da_type common_new --use_recon 1 --recon_weight 0.1 --recon_rampup 50 --recon_horizontal_ratio 0.15 --recon_vertical_ratio 0.15 --recon_block_ratio 0.1 --recon_edge_weight 0.3 --recon_freq_weight 0.7 --lr 0.001 --epochs 100 --batch_size 1 --use_global_recon 1 --global_path /home/user/ldr_code/data/global/SEAM_global256.npz --global_recon_weight 0.05",
+    "notes": "适合预训练阶段，建议后续再加可视化标签，例如 batch_size、lr、restore。"
+  },
+  {
+    "id": "seed-cmd-002",
+    "type": "command",
+    "title": "F3 微调命令",
+    "category": "训练",
+    "tags": ["深度学习", "微调", "F3"],
+    "shell": "bash",
+    "content": "python code/train.py --restore /home/user/ldr_code/only/output/seam_pretrain_recon/checkpoints/epoch_020.pth --train_path /home/user/ldr_code/data/f3/f3_patches_sparse_35 --val_path /home/user/ldr_code/data/f3_test --save output/finetune_from_epoch020 --loss_type loss_new --da_type common_new --use_recon 1 --recon_weight 0.1 --recon_rampup 50 --recon_horizontal_ratio 0.15 --recon_vertical_ratio 0.15 --recon_block_ratio 0.1 --recon_edge_weight 0.3 --recon_freq_weight 0.7 --lr 0.0001 --epochs 100 --batch_size 2 --base_width 8 --optim AdamW --n_threads 1 --seed 42 --use_global_recon 1 --global_path /home/user/ldr_code/data/global/F3_global256.npz --global_recon_weight 0.05",
+    "notes": "如果以后同一命令有多个恢复点，可以存成多条并用标签区分。"
+  }
+]
